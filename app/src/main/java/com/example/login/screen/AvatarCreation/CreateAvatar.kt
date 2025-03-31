@@ -1,4 +1,4 @@
-package com.example.login.screen
+package com.example.login.screen.AvatarCreation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,20 +30,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.graphics.Color.Companion.Unspecified
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.example.login.R
+import com.example.login.ui.theme.*
 
 
 @Composable
@@ -65,15 +71,12 @@ fun LoginScreen(paddingValues: PaddingValues,
         )
     }
 
-    val fontFamily = FontFamily(
-        Font(R.font.jsmath)
-    )
     Column(modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
 
     ) {
-        Text(text = "Press\n\nto\n\nDress", fontSize = 48.sp, fontFamily = fontFamily , textAlign = TextAlign.Center)
+        Text(text = "Press\n\nto\n\nDress", fontSize = 48.sp, fontFamily = titlefontFamily , textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(500.dp))
 
     }
@@ -151,12 +154,18 @@ fun LoginScreen(paddingValues: PaddingValues,
             modifier = Modifier
                 .width(200.dp)
                 .padding(15.dp)
+            ,
+            colors = ButtonDefaults.buttonColors(LoginPageButtonColor),
+            shape = RoundedCornerShape(30.dp),
         ){
-            Text(text = "Login")
+            Text(text = "Login", color = Black, fontFamily = PromptfontFamily, fontSize = 16.sp,fontWeight = FontWeight.Bold)
         }
 
         Text(text = "Forget Password",
-            color = MaterialTheme.colorScheme.primary,
+            color = LoginPageText,
+            fontFamily = PromptfontFamily,
+            fontSize = 14.sp,
+            style = TextStyle(textDecoration = TextDecoration.Underline),
             modifier = Modifier.clickable{
                 onNavigateToForgetPw()
 
@@ -164,8 +173,11 @@ fun LoginScreen(paddingValues: PaddingValues,
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(text = "Not a member?\n Sign in Now!",
-             color = MaterialTheme.colorScheme.primary,
-             modifier = Modifier.clickable{
+            color = LoginPageText,
+            fontFamily = PromptfontFamily,
+            fontSize = 14.sp,
+            style = TextStyle(textDecoration = TextDecoration.Underline),
+            modifier = Modifier.clickable{
                  onNavigateToRegister()
                 },
             )
