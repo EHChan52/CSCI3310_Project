@@ -51,14 +51,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.csci3310project.Screen
 import com.example.login.R
 import com.example.login.ui.theme.*
 
 @Composable
-fun registerScreen(paddingValues: PaddingValues,
-                   onNavigateToLogin: () -> Unit = {},
-                   onNavigateToCreation: () -> Unit = {}){
+fun registerScreen(navController: NavController){
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -119,7 +118,7 @@ fun registerScreen(paddingValues: PaddingValues,
                     colors = ButtonDefaults.buttonColors(RegisterPageButtonColor),
                     shape =RoundedCornerShape(5.dp),
                     onClick = {
-                        onNavigateToLogin()
+                        navController.navigate(Screen.Login.route)
                     }
                 ) {
                     Text("Back",fontSize = 16.sp, fontFamily = PromptfontFamily, color = Black)
@@ -129,7 +128,7 @@ fun registerScreen(paddingValues: PaddingValues,
                     colors = ButtonDefaults.buttonColors(RegisterPageButtonColor),
                     shape =RoundedCornerShape(5.dp),
                     onClick = {
-                        onNavigateToCreation()
+                        navController.navigate(Screen.AvatarCreation.route)
                     }
                 ) {
                     Text("Next",fontSize = 16.sp, fontFamily = PromptfontFamily, color = Black)

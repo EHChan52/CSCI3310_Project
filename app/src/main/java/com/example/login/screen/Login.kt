@@ -46,16 +46,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.csci3310project.Screen
 import com.example.login.R
 import com.example.login.ui.theme.*
 
 
 @Composable
-fun LoginScreen(paddingValues: PaddingValues,
-                onNavigateToCameraScreen: () -> Unit = {},
-                onNavigateToRegister: () -> Unit = {},
-                onNavigateToForgetPw: () -> Unit = {} ){
+fun LoginScreen(navController: NavController){
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -82,8 +81,7 @@ fun LoginScreen(paddingValues: PaddingValues,
     }
 
     Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(paddingValues),
+        .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
@@ -148,7 +146,7 @@ fun LoginScreen(paddingValues: PaddingValues,
                 nameError = if (username.isBlank()) "Username is required" else ""
                 passwordError = if (password.isBlank()) "Password is required" else ""
                 if (nameError.isEmpty() && passwordError.isEmpty()) {
-                    onNavigateToCameraScreen() // Use the callback instead of direct navigation
+                    navController.navigate(Screen.Camera.route)
                 }
             },
             modifier = Modifier
@@ -167,7 +165,7 @@ fun LoginScreen(paddingValues: PaddingValues,
             fontSize = 14.sp,
             style = TextStyle(textDecoration = TextDecoration.Underline),
             modifier = Modifier.clickable{
-                onNavigateToForgetPw()
+                navController.navigate(Screen.ForgetPassword.route)
 
             })
         Spacer(modifier = Modifier.height(10.dp))
@@ -178,7 +176,7 @@ fun LoginScreen(paddingValues: PaddingValues,
             fontSize = 14.sp,
             style = TextStyle(textDecoration = TextDecoration.Underline),
             modifier = Modifier.clickable{
-                 onNavigateToRegister()
+                navController.navigate(Screen.Register.route)
                 },
             )
 

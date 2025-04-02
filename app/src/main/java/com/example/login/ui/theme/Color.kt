@@ -17,6 +17,12 @@ val GreenJC = Color(0xFF3fdc85)
 val RegisterPageButtonColor =  Color(0xFFB0B0B0)
 val LoginPageButtonColor =  Color(0xFFD9D9D9)
 val LoginPageText = Color(0xFF4F4941)
+
+val processbarbackground = Color(0xFFD8D8F4)
+val processbar = Color(0xFF7FD0FF)
+
+val AbuttonColor = Color(0xFF98A0DB)
+
 val PromptfontFamily = FontFamily(
     Font(R.font.joanregular)
 )

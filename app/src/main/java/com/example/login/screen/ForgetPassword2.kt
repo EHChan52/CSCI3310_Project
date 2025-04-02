@@ -46,13 +46,12 @@ import com.example.login.ui.theme.RegisterPageButtonColor
 import com.example.login.ui.theme.titlefontFamily
 
 @Composable
-fun ForgetPasswordScreen(navController: NavController){
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
+fun ForgetPassword2Screen(navController: NavController){
+    var password by remember { mutableStateOf("") }
+    var confirmedPassword by remember { mutableStateOf("") }
     Box(modifier = Modifier.fillMaxSize()){
         Image(
-            painter = painterResource(id = R.drawable.forgetpassword),
+            painter = painterResource(id = R.drawable.forgetpassword2),
             contentDescription = "demo background",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.matchParentSize()
@@ -63,7 +62,7 @@ fun ForgetPasswordScreen(navController: NavController){
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
         Text(
-            text = "Forget\n\nPassword",
+            text = "Confirm\n\nPassword",
             fontSize = 48.sp,
             fontFamily = titlefontFamily,
             textAlign = TextAlign.Center,
@@ -73,33 +72,20 @@ fun ForgetPasswordScreen(navController: NavController){
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally){
             Spacer(modifier = Modifier.height(10.dp))
-            Inputdata("Email", data = remember { mutableStateOf(email) })
+            Inputdata("New Password", data = remember { mutableStateOf(password) })
             Spacer(modifier = Modifier.height(10.dp))
-            Inputdata("Phone Number", data = remember { mutableStateOf(phoneNumber) })
+            Inputdata("Confirm New Password", data = remember { mutableStateOf(confirmedPassword) })
             Spacer(modifier = Modifier.height(10.dp))
 
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 80.dp),
-                horizontalArrangement = Arrangement.SpaceBetween){
-                Button(
-                    modifier = Modifier,
-                    colors = ButtonDefaults.buttonColors(RegisterPageButtonColor),
-                    shape =RoundedCornerShape(5.dp),
-                    onClick = {
-                        navController.navigate(Screen.Login.route)
-                    }
-                ) {
-                    Text("Back",fontSize = 16.sp, fontFamily = PromptfontFamily, color = Black)
+            Button(
+                modifier = Modifier,
+                colors = ButtonDefaults.buttonColors(RegisterPageButtonColor),
+                shape =RoundedCornerShape(5.dp),
+                onClick = {
+                    navController.navigate(Screen.Login.route)
                 }
-                Button(
-                    modifier = Modifier,
-                    colors = ButtonDefaults.buttonColors(RegisterPageButtonColor),
-                    shape =RoundedCornerShape(5.dp),
-                    onClick = {
-                        navController.navigate(Screen.ForgetPassword2.route)
-                    }
-                ) {
-                    Text("Verify",fontSize = 16.sp, fontFamily = PromptfontFamily, color = Black)
-                }
+            ) {
+                Text("Confirm",fontSize = 16.sp, fontFamily = PromptfontFamily, color = Black)
             }
             Spacer(modifier = Modifier.height(10.dp))
         }
