@@ -3,21 +3,18 @@ package com.example.csci3310
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.navigation.NavController
-import com.example.fragment_test2.Fitting_and_cart.FittingPage
-import com.example.fragment_test2.Fitting_and_cart.cartPage
-import com.example.fragment_test2.Homepage.HomeNavigation
+import com.example.afer_login.Fitting_and_cart.FittingPage
+import com.example.afer_login.Fitting_and_cart.cartPage
+import com.example.afer_login.Homepage.HomeNavigation
 import com.example.csci3310.databinding.ActivityMainBinding
 import me.ibrahimsn.lib.SmoothBottomBar
-import com.example.fragment_test2.SettingPage
-import com.example.csci3310.R
+import com.example.afer_login.SettingPage
 import com.example.login.ui.theme.LoginTheme
 
 class MainActivity : AppCompatActivity() {

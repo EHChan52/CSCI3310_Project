@@ -1,6 +1,5 @@
-package com.example.fragment_test2.Homepage
+package com.example.afer_login.Homepage
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable

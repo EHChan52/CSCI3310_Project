@@ -1,4 +1,4 @@
-package com.example.fragment_test2
+package com.example.afer_login
 
 import org.junit.Test
 

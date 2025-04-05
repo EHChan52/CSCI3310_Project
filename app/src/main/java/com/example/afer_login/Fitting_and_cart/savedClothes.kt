@@ -1,4 +1,4 @@
-package com.example.fragment_test2.Fitting_and_cart
+package com.example.afer_login.Fitting_and_cart
 
 import com.example.csci3310.R
 

@@ -1,51 +1,56 @@
-package com.example.fragment_test2.Fitting_and_cart
+package com.example.afer_login.Fitting_and_cart
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.csci3310.R
-import com.example.fragment_test2.*
-import com.example.fragment_test2.Homepage.getAllsearchedClothes
-import com.example.fragment_test2.Homepage.searchedClothes
+import com.example.afer_login.*
 
+@Preview
 @Composable
 fun FittingPage(){
     Column(modifier = Modifier.padding(15.dp)){
         Box(modifier = Modifier.fillMaxWidth().height(500.dp)){
             //where the avatar place
+            Image(
+                painter = painterResource(id = R.drawable.fitting_room_background),
+                contentDescription = "Fitting room background",
+                modifier = Modifier.fillMaxWidth().height(500.dp),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.align(Alignment.Center)) {
+                Image(
+                    painter = painterResource(id = R.drawable.human_avatar_default),
+                    contentDescription = "Human head",
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(20.dp)
+                )
+
+            }
             Column(horizontalAlignment = Alignment.End,
                 modifier = Modifier.align(Alignment.BottomEnd)) {
                 ButtonsForAvatar(R.drawable.plus, onClick = {})

@@ -5,7 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.login.takeuserface.CameraScreen
+import com.example.login.takeuserface.ImageReviewScreen
 import com.example.login.screen.*
 
 sealed class Screen(val route: String){
@@ -15,7 +18,7 @@ sealed class Screen(val route: String){
     object ForgetPassword : Screen("forgetpw_screen")
     object ForgetPassword2 : Screen("forgetpw2_screen")
     object AvatarCreation: Screen("create_screen")
-
+    object ImageReview: Screen("image_review_screen/{imageUri}")
 }
 
 @Composable
@@ -42,6 +45,16 @@ fun BeforeLoginNavigation(onLoginSuccess:() -> Unit) {
         }
         composable(Screen.AvatarCreation.route) {
             CreateAvatar(navController)
+        }
+        // Add route for image review screen with URI parameter
+        composable(
+            route = "image_review_screen/{imageUri}",
+            arguments = listOf(
+                navArgument("imageUri") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val imageUriString = backStackEntry.arguments?.getString("imageUri") ?: ""
+            ImageReviewScreen(navController, imageUriString)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.fragment_test2
+package com.example.afer_login
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font

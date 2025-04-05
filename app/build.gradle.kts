@@ -85,5 +85,14 @@ android {
 
         implementation("androidx.navigation:navigation-compose:2.8.9")
 
+    
+        implementation ("io.coil-kt:coil-compose:2.4.0")
+
     }
+}
+dependencies {
+    implementation(libs.volley)
+    implementation(libs.androidx.runner)
+    implementation(libs.androidx.runner)
+    implementation(libs.androidx.espresso.core)
 }

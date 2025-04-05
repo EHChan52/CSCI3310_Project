@@ -170,7 +170,7 @@ fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
             })
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text(text = "Not a member?\n Sign in Now!",
+        Text(text = "Not a member?\n Sign Up Now!",
             color = LoginPageText,
             fontFamily = PromptfontFamily,
             fontSize = 14.sp,

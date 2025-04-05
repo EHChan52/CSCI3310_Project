@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -38,6 +39,7 @@ import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -48,11 +50,22 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.mlkit.vision.common.InputImage
+import okhttp3.Request
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -65,28 +78,28 @@ data class DetectedFace(
 )
 
 @Composable
-fun CameraScreen(navController:NavController ) {
+fun CameraScreen(navController: NavController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    
+
     // Face detection state
     var faceDetected by remember { mutableStateOf(false) }
-    
+
     // Store the detected faces for drawing the overlay
     var detectedFaces by remember { mutableStateOf<List<DetectedFace>>(emptyList()) }
-    
+
     // For camera preview dimensions
     var previewWidth by remember { mutableStateOf(0) }
     var previewHeight by remember { mutableStateOf(0) }
-    
+
     // For storing the ImageCapture instance with better quality settings
-    val imageCaptureUseCase = remember { 
+    val imageCaptureUseCase = remember {
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Using setTargetAspectRatio instead of ResolutionSelector
-            .build() 
+            .build()
     }
-    
+
     // Check required permissions
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -96,38 +109,38 @@ fun CameraScreen(navController:NavController ) {
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    
+
     // For storage permission if needed (API < 29)
     var hasStoragePermission by remember {
         mutableStateOf(
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || 
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    
+
     // Permission launchers
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted -> 
         hasCameraPermission = isGranted
     }
-    
+
     val storagePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted -> 
         hasStoragePermission = isGranted
     }
-    
+
     // Check and request storage permission if needed
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !hasStoragePermission) {
             storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -142,7 +155,7 @@ fun CameraScreen(navController:NavController ) {
             fontSize = 20.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-        
+
         // Camera preview box with face detection status
         Box(
             modifier = Modifier
@@ -169,20 +182,19 @@ fun CameraScreen(navController:NavController ) {
                     },
                     imageCaptureUseCase = imageCaptureUseCase
                 )
-                
-                // Face overlay that draws boxes around detected faces
-                if (detectedFaces.isNotEmpty() && previewWidth > 0 && previewHeight > 0) {
-                    FaceOverlay(
-                        faces = detectedFaces,
+
+                // Remove the face overlay that draws boxes around detected faces
+                // Instead, you can optionally draw a fixed center box to indicate capture area
+                if (previewWidth > 0 && previewHeight > 0) {
+                    FixedCenterOverlay(
                         previewWidth = previewWidth,
                         previewHeight = previewHeight,
                         modifier = Modifier
                             .fillMaxSize()
-                            .zIndex(10f) // Make sure overlay is on top
+                            .zIndex(10f)
                     )
                 }
             } else {
-                // Show placeholder and request permission message
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -194,11 +206,11 @@ fun CameraScreen(navController:NavController ) {
                     }
                 }
             }
-            
+
             // Status text for face detection
             if (hasCameraPermission) {
                 Text(
-                    text = if (faceDetected) "Face detected!" else "No face detected",
+                    text = if (faceDetected) "Face detected! Center your face and take a photo" else "No face detected",
                     color = if (faceDetected) Color(0xFF4CAF50) else Color.Red,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -208,9 +220,9 @@ fun CameraScreen(navController:NavController ) {
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Two buttons in a row
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -222,21 +234,26 @@ fun CameraScreen(navController:NavController ) {
             ) {
                 Text("Cancel")
             }
-            
+
             Button(
-                onClick = { 
+                onClick = {
                     if (faceDetected) {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !hasStoragePermission) {
                             Toast.makeText(
                                 context,
                                 "Storage permission is required to save photos",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                Toast.LENGTH_SHORT).show()
                             storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                         } else {
-                            // Log that we're about to capture
+                            // Create a fixed rectangle at the center of the preview
                             Log.d("CameraCapture", "Attempting to capture photo with face detected")
-                            capturePhoto(context, imageCaptureUseCase)
+                            captureFixedAreaPhoto(
+                                context,
+                                imageCaptureUseCase,
+                                previewWidth,
+                                previewHeight,
+                                navController  // Pass navController to handle navigation
+                            )
                         }
                     }
                 },
@@ -250,44 +267,219 @@ fun CameraScreen(navController:NavController ) {
     }
 }
 
+// Replace FaceOverlay with FixedCenterOverlay that shows a fixed center area
 @Composable
-private fun FaceOverlay(
-    faces: List<DetectedFace>,
+private fun FixedCenterOverlay(
     previewWidth: Int,
     previewHeight: Int,
     modifier: Modifier = Modifier
 ) {
-    // Draw boxes around detected faces
+    // Draw a fixed box in the center (invisible by default - comment out if you want to show it)
     Canvas(modifier = modifier) {
+        // This overlay is invisible - uncomment the drawRect to make it visible
+        // Keeping this function in case you want a visual indicator in the future
+
+        //Uncomment if you want to show the capture area
         val canvasWidth = size.width
         val canvasHeight = size.height
         
-        // Calculate scale factors between the preview and the canvas
-        val scaleX = canvasWidth / previewWidth
-        val scaleY = canvasHeight / previewHeight
+        // Define a fixed size for the center box (e.g., 70% of the preview width and height)
+        val boxWidth = canvasWidth * 0.7f
+        val boxHeight = canvasHeight * 0.7f
         
-        faces.forEach { face ->
-            // Adding padding to make the rectangle larger (20% of face dimensions)
-            val paddingX = face.boundingBox.width() * 0.2f
-            val paddingY = face.boundingBox.height() * 0.2f
-            
-            // Scale the face bounding box to match the canvas size and add padding
-            val left = (face.boundingBox.left - paddingX) * scaleX
-            val top = (face.boundingBox.top - paddingY) * scaleY
-            val right = (face.boundingBox.right + paddingX) * scaleX
-            val bottom = (face.boundingBox.bottom + paddingY) * scaleY
-            
-            // Draw a red rectangle around the face with thicker stroke
-            drawRect(
-                color = Color.Red,
-                topLeft = Offset(left, top),
-                size = ComposeSize(right - left, bottom - top),
-                style = Stroke(width = 4f) // Increased stroke width from 4f to 8f
-            )
-        }
+        // Calculate the center point
+        val centerX = canvasWidth / 2
+        val centerY = canvasHeight / 2
+        
+        // Calculate the top-left point of the box
+        val left = centerX - (boxWidth / 2)
+        val top = centerY - (boxHeight / 2)
+        
+        // Draw a semi-transparent outline to indicate capture area
+        drawRect(
+            color = Color.White.copy(alpha = 0.5f),
+            topLeft = Offset(left, top),
+            size = ComposeSize(boxWidth, boxHeight),
+            style = Stroke(width = 2f)
+        )
+        
     }
 }
 
+// New function to capture a fixed center area
+private fun captureFixedAreaPhoto(
+    context: Context,
+    imageCapture: ImageCapture,
+    previewWidth: Int,
+    previewHeight: Int,
+    navController: NavController  // Add NavController parameter
+) {
+    // Log the capture attempt
+    Log.d("CameraCapture", "Starting center area photo capture process")
+
+    try {
+        // Create time-stamped output file to hold the image
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())
+        val photoFileName = "FACE_$timeStamp.png"
+
+        // Create a temporary file for full image before cropping
+        val tempFileName = "TEMP_$timeStamp.png"
+        val tempDir = File(context.cacheDir, "temp").apply {
+            if (!exists()) mkdirs()
+        }
+        val tempFile = File(tempDir, tempFileName)
+
+        // Create output options for the temporary file
+        val tempOutputOptions = ImageCapture.OutputFileOptions.Builder(tempFile).build()
+
+        // Capture the full image first to a temp file
+        Log.d("CameraCapture", "Taking full picture to temporary file...")
+        imageCapture.takePicture(
+            tempOutputOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    try {
+                        // Process and crop the image
+                        val bitmap = android.graphics.BitmapFactory.decodeFile(tempFile.absolutePath)
+
+                        // Define the fixed center area (e.g., 70% of the bitmap dimensions)
+                        val centerX = bitmap.width / 2
+                        val centerY = bitmap.height / 2
+                        val boxWidth = (bitmap.width * 0.7f).toInt()
+                        val boxHeight = (bitmap.height * 0.7f).toInt()
+
+                        // Calculate the crop rectangle
+                        val cropRect = Rect(
+                            centerX - (boxWidth / 2),
+                            centerY - (boxHeight / 2),
+                            centerX + (boxWidth / 2),
+                            centerY + (boxHeight / 2)
+                        )
+
+                        // Ensure the rectangle is valid and within bounds
+                        val validCropRect = Rect(
+                            cropRect.left.coerceAtLeast(0),
+                            cropRect.top.coerceAtLeast(0),
+                            cropRect.right.coerceAtMost(bitmap.width),
+                            cropRect.bottom.coerceAtMost(bitmap.height)
+                        )
+
+                        // Ensure the rectangle is valid
+                        if (validCropRect.width() <= 0 || validCropRect.height() <= 0) {
+                            throw Exception("Invalid crop rectangle dimensions")
+                        }
+
+                        // Crop the bitmap to the center area
+                        val croppedBitmap = android.graphics.Bitmap.createBitmap(
+                            bitmap,
+                            validCropRect.left,
+                            validCropRect.top,
+                            validCropRect.width(),
+                            validCropRect.height()
+                        )
+                        
+                        // Rotate the cropped bitmap 90 degrees anticlockwise
+                        val matrix = android.graphics.Matrix().apply {
+                            postRotate(-90f) // Negative for anticlockwise rotation
+                        }
+                        
+                        // Create a new bitmap with the rotation applied
+                        // Note: We're switching width and height due to the 90-degree rotation
+                        val rotatedBitmap = android.graphics.Bitmap.createBitmap(
+                            croppedBitmap,
+                            0, 0,
+                            croppedBitmap.width, croppedBitmap.height,
+                            matrix,
+                            true
+                        )
+                        
+                        // Log the rotation
+                        Log.d("CameraCapture", "Rotated image 90 degrees anticlockwise: ${croppedBitmap.width}x${croppedBitmap.height} -> ${rotatedBitmap.width}x${rotatedBitmap.height}")
+
+                        // Save the rotated bitmap to the final destination
+                        val finalFile: File
+                        val savedUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            // For Android 10 and above, use MediaStore
+                            val contentValues = ContentValues().apply {
+                                put(MediaStore.MediaColumns.DISPLAY_NAME, photoFileName)
+                                put(MediaStore.MediaColumns.MIME_TYPE, "image/png") // Changed to PNG
+                                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FaceAuth")
+                            }
+
+                            val uri = context.contentResolver.insert(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                contentValues
+                            )
+
+                            uri?.let {
+                                context.contentResolver.openOutputStream(it)?.use { os -> 
+                                    // Save rotated bitmap as PNG instead of JPEG
+                                    rotatedBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, os)
+                                }
+                            }
+                            uri
+                        } else {
+                            // For older versions, use the external media directory
+                            val storageDir = context.getExternalFilesDir("Pictures/FaceAuth")
+                            if (storageDir == null) {
+                                // Fallback to internal storage
+                                val internalDir = File(context.filesDir, "Pictures/FaceAuth").apply {
+                                    if (!exists()) mkdirs()
+                                }
+                                finalFile = File(internalDir, photoFileName)
+                            } else {
+                                storageDir.mkdirs() // Ensure directory exists
+                                finalFile = File(storageDir, photoFileName)
+                            }
+
+                            // Save the rotated bitmap to file as PNG
+                            finalFile.outputStream().use { os -> 
+                                // Save rotated bitmap as PNG instead of JPEG
+                                rotatedBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, os)
+                            }
+                            android.net.Uri.fromFile(finalFile)
+                        }
+
+                        // Clean up temporary file
+                        tempFile.delete()
+
+                        // Recycle bitmaps to free memory
+                        bitmap.recycle()
+                        croppedBitmap.recycle()
+                        rotatedBitmap.recycle() // Recycle the new rotated bitmap as well
+
+                        // Notify success
+                        val msg = "Photo captured, please review"
+                        Log.d("CameraCapture", "$msg: $savedUri")
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        
+                        // Navigate to the image review screen with the URI
+                        // We need to encode the URI as it may contain special characters
+                        val encodedUri = URLEncoder.encode(savedUri.toString(), StandardCharsets.UTF_8.toString())
+                        navController.navigate("image_review_screen/$encodedUri")
+                    } catch (e: Exception) {
+                        Log.e("CameraCapture", "Error processing and cropping image", e)
+                        Toast.makeText(context, "Failed to process face image: ${e.message}", Toast.LENGTH_SHORT).show()
+                        tempFile.delete() // Clean up temp file on error
+                    }
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    val errorMsg = "Photo capture failed: ${exception.message}"
+                    Log.e("CameraCapture", errorMsg, exception)
+                    Log.e("CameraCapture", "Error code: ${exception.imageCaptureError}")
+                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    } catch (e: Exception) {
+        Log.e("CameraCapture", "Setup failed: ${e.message}", e)
+        Toast.makeText(context, "Failed to setup photo capture: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+// Add the missing CameraPreviewWithFaceDetection function
 @Composable
 private fun CameraPreviewWithFaceDetection(
     modifier: Modifier = Modifier,
@@ -320,14 +512,12 @@ private fun CameraPreviewWithFaceDetection(
         ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Using setTargetAspectRatio instead
-            // Alternatively, use setTargetResolution for a specific size
-            // .setTargetResolution(Size(640, 480))
             .build()
     }
     
     // Set the analyzer separately
     DisposableEffect(imageAnalysis) {
-        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy -> 
             // Pass the preview dimensions along with the detected faces
             processImageForFaceDetection(
                 imageProxy, 
@@ -348,7 +538,7 @@ private fun CameraPreviewWithFaceDetection(
     
     AndroidView(
         modifier = modifier,
-        factory = { ctx ->
+        factory = { ctx -> 
             val view = PreviewView(ctx)
             previewView = view
             
@@ -377,7 +567,7 @@ private fun CameraPreviewWithFaceDetection(
             
             view
         },
-        update = { view ->
+        update = { view -> 
             // Store the preview view reference and dimensions
             previewView = view
         }
@@ -415,12 +605,12 @@ private fun processImageForFaceDetection(
     val startTime = System.currentTimeMillis()
     
     faceDetector.process(image)
-        .addOnSuccessListener { faces ->
+        .addOnSuccessListener { faces -> 
             val detectionTime = System.currentTimeMillis() - startTime
             Log.d("FaceDetection", "Detection completed in ${detectionTime}ms, found ${faces.size} faces")
             
             // Only report faces that are large enough for accurate detection
-            val validFaces = faces.filter { face ->
+            val validFaces = faces.filter { face -> 
                 val faceWidth = face.boundingBox.width()
                 val faceHeight = face.boundingBox.height()
                 
@@ -436,7 +626,7 @@ private fun processImageForFaceDetection(
             
             onFaceDetected(validFaces)
         }
-        .addOnFailureListener { e ->
+        .addOnFailureListener { e -> 
             Log.e("FaceDetection", "Face detection failed", e)
             onFaceDetected(emptyList())
         }
@@ -445,78 +635,188 @@ private fun processImageForFaceDetection(
         }
 }
 
-private fun capturePhoto(context: Context, imageCapture: ImageCapture) {
-    // Log the capture attempt
-    Log.d("CameraCapture", "Starting photo capture process")
+@Composable
+fun ImageReviewScreen(navController: NavController, imageUriString: String) {
+    val context = LocalContext.current
+    val decodedUri = Uri.parse(java.net.URLDecoder.decode(imageUriString, StandardCharsets.UTF_8.toString()))
     
-    try {
-        // Create time-stamped output file to hold the image
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())
-        val photoFileName = "FACE_$timeStamp.jpg"
+    // Create coroutine scope at the Composable level where it's valid
+    val coroutineScope = rememberCoroutineScope()
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Photo Review",
+            fontSize = 24.sp,
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
         
-        // Create output options object
-        val outputOptions: ImageCapture.OutputFileOptions
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // For Android 10 and above, use MediaStore
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, photoFileName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FaceAuth")
-            }
-            
-            Log.d("CameraCapture", "Creating MediaStore output options")
-            outputOptions = ImageCapture.OutputFileOptions.Builder(
-                context.contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            ).build()
-        } else {
-            // For older versions, use the external media directory
-            val storageDir = context.getExternalFilesDir("Pictures/FaceAuth")
-            if (storageDir == null) {
-                // Fallback to internal storage
-                Log.d("CameraCapture", "External storage not available, using internal storage")
-                val internalDir = File(context.filesDir, "Pictures/FaceAuth").apply {
-                    if (!exists()) mkdirs()
-                }
-                val photoFile = File(internalDir, photoFileName)
-                outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-            } else {
-                storageDir.mkdirs() // Ensure directory exists
-                val photoFile = File(storageDir, photoFileName)
-                Log.d("CameraCapture", "Using external storage file: ${photoFile.absolutePath}")
-                outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-            }
+        // Image display box
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(Color.LightGray)
+                .border(2.dp, Color.DarkGray),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(decodedUri)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Captured face photo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
         }
         
-        // Capture the image
-        Log.d("CameraCapture", "Taking picture...")
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val savedUri = outputFileResults.savedUri
-                    val msg = if (savedUri != null) {
-                        "Photo saved successfully: $savedUri"
-                    } else {
-                        "Photo saved to file"
-                    }
-                    Log.d("CameraCapture", msg)
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                }
-                
-                override fun onError(exception: ImageCaptureException) {
-                    val errorMsg = "Photo capture failed: ${exception.message}"
-                    Log.e("CameraCapture", errorMsg, exception)
-                    Log.e("CameraCapture", "Error code: ${exception.imageCaptureError}")
-                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
-                }
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Action buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(
+                onClick = { navController.popBackStack() }, // Go back to camera
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+            ) {
+                Text("Retake Photo")
             }
-        )
-    } catch (e: Exception) {
-        Log.e("CameraCapture", "Setup failed: ${e.message}", e)
-        Toast.makeText(context, "Failed to setup photo capture: ${e.message}", Toast.LENGTH_SHORT).show()
+            
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Processing photo...", Toast.LENGTH_SHORT).show()
+                    
+                    coroutineScope.launch(Dispatchers.IO) {
+                        try {
+                            // Use ContentResolver to get an InputStream from the URI
+                            val inputStream = context.contentResolver.openInputStream(decodedUri)
+                            if (inputStream == null) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Failed to read image data", Toast.LENGTH_SHORT).show()
+                                }
+                                return@launch
+                            }
+                            
+                            // Read the image data into a ByteArray
+                            val imageBytes = inputStream.use { it.readBytes() }
+                            
+                            // Convert image to base64 for Segmind API
+                            val base64Image = android.util.Base64.encodeToString(
+                                imageBytes, 
+                                android.util.Base64.NO_WRAP
+                            )
+                            
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Removing background...", Toast.LENGTH_SHORT).show()
+                            }
+                            
+                            // Create OkHttpClient with timeout configuration
+                            val client = OkHttpClient.Builder()
+                                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                                .build()
+                            
+                            // Segmind API setup 
+                            val apiKey = "SG_b78e15ed8491c323"
+                            val segmindUrl = "https://api.segmind.com/v1/background-eraser"
+                            
+                            // Create JSON payload matching the Python example
+                            val jsonPayload = """
+                                {
+                                  "image": "$base64Image",
+                                  "return_mask": false,
+                                  "invert_mask": false,
+                                  "grow_mask": 0,
+                                  "base64": false
+                                }
+                            """.trimIndent()
+                            
+                            val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+                            val segmindRequestBody = jsonPayload.toRequestBody(jsonMediaType)
+                            
+                            val segmindRequest = Request.Builder()
+                                .url(segmindUrl)
+                                .header("x-api-key", apiKey)
+                                .post(segmindRequestBody)
+                                .build()
+                            
+                            try {
+                                // Execute the API call
+                                val segmindResponse = client.newCall(segmindRequest).execute()
+                                
+                                if (segmindResponse.isSuccessful) {
+                                    // Get the response as binary data (not base64)
+                                    val processedImageBytes = segmindResponse.body?.bytes()
+                                    
+                                    if (processedImageBytes != null) {
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, "Background removed successfully", Toast.LENGTH_SHORT).show()
+                                        }
+                                        
+                                        // Save the image as "user-face.png"
+                                        val processedFileName = "user-face.png"
+                                        
+                                        // File to store processed image
+                                        val storageDir = context.getExternalFilesDir("Pictures/FaceAuth")
+                                        storageDir?.mkdirs()
+                                        val outputFile = File(storageDir, processedFileName)
+                                        
+                                        // Write binary data directly to file
+                                        outputFile.writeBytes(processedImageBytes)
+                                        
+                                        Log.d("ImageReview", "Saved background-removed image to ${outputFile.absolutePath}")
+                                        
+                                        // Save a copy to MediaStore for gallery access
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            val contentValues = ContentValues().apply {
+                                                put(MediaStore.MediaColumns.DISPLAY_NAME, processedFileName)
+                                                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                                                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FaceAuth")
+                                            }
+                                            
+                                            context.contentResolver.insert(
+                                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                                contentValues
+                                            )?.let { newUri ->
+                                                context.contentResolver.openOutputStream(newUri)?.use { os ->
+                                                    os.write(processedImageBytes)
+                                                }
+                                            }
+                                        }
+                                        
+                                        // Navigate directly to login screen after saving the image
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, "Face image saved successfully", Toast.LENGTH_SHORT).show()
+                                            navController.navigate("login_screen") {
+                                                popUpTo("login_screen") { inclusive = true }
+                                            }
+                                        }
+                                    } else {
+                                        throw Exception("Received empty response from background removal API")
+                                    }
+                                } else {
+                                    throw Exception("Background removal failed: ${segmindResponse.message}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ImageReview", "Error during background removal: ${e.message}", e)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ImageReview", "Error processing image: ${e.message}", e)
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+            ) {
+                Text("Use This Photo", color = Color.White)
+            }
+        }
     }
 }
