@@ -9,6 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.login.takeuserface.CameraScreen
 import com.example.login.takeuserface.ImageReviewScreen
+import com.example.login.takeuserface.AvatarColorPreviewScreen
 import com.example.login.screen.*
 
 sealed class Screen(val route: String){
@@ -19,6 +20,7 @@ sealed class Screen(val route: String){
     object ForgetPassword2 : Screen("forgetpw2_screen")
     object AvatarCreation: Screen("create_screen")
     object ImageReview: Screen("image_review_screen/{imageUri}")
+    object AvatarColorPreview: Screen("avatar_color_preview_screen")
 }
 
 @Composable
@@ -55,6 +57,11 @@ fun BeforeLoginNavigation(onLoginSuccess:() -> Unit) {
         ) { backStackEntry ->
             val imageUriString = backStackEntry.arguments?.getString("imageUri") ?: ""
             ImageReviewScreen(navController, imageUriString)
+        }
+        
+        // Add route for avatar color preview screen
+        composable(Screen.AvatarColorPreview.route) {
+            AvatarColorPreviewScreen(navController)
         }
     }
 }

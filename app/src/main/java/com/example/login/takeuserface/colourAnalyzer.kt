@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 
-class BgRemover {
+class colourAnalyzer {
     
     /**
      * Analyzes the color at the middle of a PNG image

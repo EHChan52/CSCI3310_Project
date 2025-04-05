@@ -643,6 +643,9 @@ fun ImageReviewScreen(navController: NavController, imageUriString: String) {
     // Create coroutine scope at the Composable level where it's valid
     val coroutineScope = rememberCoroutineScope()
     
+    // State to track if background removal is complete
+    var backgroundRemovalComplete by remember { mutableStateOf(false) }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -792,12 +795,12 @@ fun ImageReviewScreen(navController: NavController, imageUriString: String) {
                                             }
                                         }
                                         
-                                        // Navigate directly to login screen after saving the image
+                                        // Set flag to indicate processing is complete
                                         withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, "Face image saved successfully", Toast.LENGTH_SHORT).show()
-                                            navController.navigate("login_screen") {
-                                                popUpTo("login_screen") { inclusive = true }
-                                            }
+                                            backgroundRemovalComplete = true
+                                            
+                                            // Navigate to the avatar color preview screen
+                                            navController.navigate("avatar_color_preview_screen")
                                         }
                                     } else {
                                         throw Exception("Received empty response from background removal API")
@@ -807,15 +810,37 @@ fun ImageReviewScreen(navController: NavController, imageUriString: String) {
                                 }
                             } catch (e: Exception) {
                                 Log.e("ImageReview", "Error during background removal: ${e.message}", e)
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         } catch (e: Exception) {
                             Log.e("ImageReview", "Error processing image: ${e.message}", e)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+                // Disable button if background removal is already complete
+                enabled = !backgroundRemovalComplete
             ) {
-                Text("Use This Photo", color = Color.White)
+                Text(
+                    if (backgroundRemovalComplete) "Processing Complete" else "Use This Photo", 
+                    color = Color.White
+                )
+            }
+        }
+        
+        // Show the option to navigate to avatar preview if background removal is complete
+        if (backgroundRemovalComplete) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { navController.navigate("avatar_color_preview_screen") },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+            ) {
+                Text("View Avatar Preview", color = Color.White)
             }
         }
     }
