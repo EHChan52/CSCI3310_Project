@@ -29,9 +29,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.afer_login.*
+import android.util.Log
+import com.example.afer_login.dataFetch.DataFetcher
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun HomePageContent(navController: NavController){
+    
+
+    // Use state to hold the fetched items
+    var allItems by remember { mutableStateOf(listOf<Any>()) }
+    val dataFetcher = remember { DataFetcher() }
+
+    // Launch the data fetching in a coroutine
+    LaunchedEffect(key1 = Unit) {
+        withContext(Dispatchers.IO) {
+            dataFetcher.connect("mongodb://Admin:12345678@20.2.218.171:5222/", "csci3310Project")
+            dataFetcher.fetchData("clothes")
+            val items = dataFetcher.getAllItems()
+            // Update state on the main thread
+            allItems = items
+        }
+    }
+
+
+    // Add logging to view fetched data
+    val TAG = "HomePage"
+    Log.d(TAG, "Total items fetched: ${allItems.size}")
+    allItems.forEach { item ->
+        Log.d(TAG, "Item: $item")
+    }
 
     Column (modifier = Modifier.fillMaxSize().padding(15.dp), verticalArrangement = Arrangement.Top){
         Text(

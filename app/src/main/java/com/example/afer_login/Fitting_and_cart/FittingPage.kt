@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -48,6 +50,7 @@ import java.io.File
 fun FittingPage(){
     val context = LocalContext.current
     var customAvatarBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var selectedClothes by remember { mutableStateOf<List<savedClothes>>(emptyList()) }
     
     // Load the custom avatar when the page is first displayed
     LaunchedEffect(key1 = Unit) {
@@ -89,30 +92,50 @@ fun FittingPage(){
             Column(horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.align(Alignment.Center)) {
                 
-                // Use the custom avatar if available, otherwise use the default
-                if (customAvatarBitmap != null) {
-                    Image(
-                        bitmap = customAvatarBitmap!!.asImageBitmap(),
-                        contentDescription = "Custom Avatar",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight()
-                            .padding(20.dp)
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.human_avatar_default),
-                        contentDescription = "Human head",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight()
-                            .padding(20.dp)
-                    )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Use the custom avatar if available, otherwise use the default
+                    if (customAvatarBitmap != null) {
+                        Image(
+                            bitmap = customAvatarBitmap!!.asImageBitmap(),
+                            contentDescription = "Custom Avatar",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .padding(20.dp)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.human_avatar_default),
+                            contentDescription = "Default Avatar",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .padding(20.dp)
+                        )
+                    }
+                    
+                    // Overlay the selected clothes on top of the avatar
+                    selectedClothes.forEach { clothing ->
+                        Image(
+                            painter = painterResource(id = clothing.imageRes),
+                            contentDescription = clothing.name,
+                            modifier = Modifier
+                                .size(190.dp)  // Make the overlay image smaller
+                                .align(Alignment.Center)  // Center align the overlay image
+                                .then(
+                                    if (clothing.type == "top") {
+                                        Modifier.offset(y = (-75).dp)
+                                    } else {
+                                        Modifier.offset(y = (20).dp)
+                                    }
+                                )
+                        )
+                    }
                 }
             }
             Column(horizontalAlignment = Alignment.End,
                 modifier = Modifier.align(Alignment.BottomEnd)) {
-                ButtonsForAvatar(R.drawable.plus, onClick = {})
+                ButtonsForAvatar(R.drawable.plus, onClick = { selectedClothes = emptyList() })
                 ButtonsForAvatar(R.drawable.transfer, onClick = {})
                 ButtonsForAvatar(R.drawable.maximize, onClick = {})
             }
@@ -128,19 +151,40 @@ fun FittingPage(){
             contentPadding =  PaddingValues(5.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            itemsIndexed(myList, itemContent = {
-                index, it1 ->  ClothesinCart(it1)
-            }
-            )
+            itemsIndexed(myList, itemContent = { index, item -> 
+                ClothesinCart(
+                    item = item,
+                    onSelect = { 
+                        selectedClothes = selectedClothes + it
+                    }
+                )
+            })
         }
     }
 }
 
 @Composable
-private fun ClothesinCart(item: savedClothes){
-    Image(painter = painterResource(id = item.imageRes),
-        contentDescription = item.name,
-        modifier = Modifier.size(150.dp).padding(vertical = 3.dp, horizontal = 2.dp))
+private fun ClothesinCart(
+    item: savedClothes,
+    onSelect: (savedClothes) -> Unit
+){
+    Button(
+        onClick = { onSelect(item) },
+        modifier = Modifier
+            .size(150.dp)
+            .padding(vertical = 3.dp, horizontal = 2.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent
+        ),
+        contentPadding = PaddingValues(0.dp),
+        shape = RoundedCornerShape(0.dp)  // Ensure non-circular buttons
+    ) {
+        Image(
+            painter = painterResource(id = item.imageRes),
+            contentDescription = item.name,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable
@@ -151,7 +195,7 @@ fun ButtonsForAvatar(
 ) {
 
     Button(
-        onClick = { },
+        onClick = onClick,
         modifier = Modifier.padding(3.dp),
         shape = RoundedCornerShape(0.dp),
         elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 5.dp),
