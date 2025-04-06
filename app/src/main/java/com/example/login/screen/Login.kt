@@ -1,7 +1,6 @@
 package com.example.login.screen
 
-import android.widget.Toast
-import com.example.csci3310.MainActivity
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,20 +46,45 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.csci3310.Screen
+import com.example.afer_login.dataFetch.User
+import com.example.afer_login.dataFetch.UserService
 import com.example.csci3310.R
-import com.example.login.ui.theme.*
-
+import com.example.csci3310.Screen
+import com.example.login.ui.theme.LoginPageButtonColor
+import com.example.login.ui.theme.LoginPageText
+import com.example.login.ui.theme.PromptfontFamily
+import com.example.login.ui.theme.titlefontFamily
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
+fun LoginScreen(navController: NavController, onLoginSuccess: (User) -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
     var nameError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
-    Box(modifier = Modifier.fillMaxSize()){
+
+    // Create a coroutine scope
+    val coroutineScope = rememberCoroutineScope()
+
+    // Fetch all users when the screen loads
+    LaunchedEffect(key1 = Unit) {
+        coroutineScope.launch {
+            try {
+                val userService = UserService()
+                val users = userService.getAllUsers()
+                Log.d("LoginScreen", "Users fetched: ${users.size}")
+                users.forEach { user ->
+                    Log.d("LoginScreen", "User: ${user.email}, Display name: ${user.displayName}")
+                }
+            } catch (e: Exception) {
+                Log.e("LoginScreen", "Error fetching users: ${e.message}")
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.login_2),
             contentDescription = "demo background",
@@ -67,32 +93,41 @@ fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize(),
+    Column(
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-
     ) {
-        Text(text = "Press\n\nto\n\nDress", fontSize = 48.sp, fontFamily = titlefontFamily , textAlign = TextAlign.Center)
+        Text(
+            text = "Press\n\nto\n\nDress",
+            fontSize = 48.sp,
+            fontFamily = titlefontFamily,
+            textAlign = TextAlign.Center
+        )
         Spacer(modifier = Modifier.height(500.dp))
-
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize(),
+    Column(
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-    ){
+    ) {
         Spacer(modifier = Modifier.height(340.dp))
         TextField(
             value = username,
-            onValueChange = {username = it},
+            onValueChange = { username = it },
             singleLine = true,
-            label = { Text(nameError.ifEmpty { "Username" },color = if (nameError.isNotEmpty()) Red else Unspecified ) },
+            label = {
+                Text(
+                    nameError.ifEmpty { "Username" },
+                    color = if (nameError.isNotEmpty()) Red else Unspecified
+                )
+            },
             leadingIcon = {
                 Icon(
                     Icons.Rounded.AccountCircle,
-                    contentDescription =  "" )
-
+                    contentDescription = ""
+                )
             },
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
@@ -106,14 +141,19 @@ fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
         Spacer(modifier = Modifier.height(10.dp))
         TextField(
             value = password,
-            onValueChange = {password = it},
+            onValueChange = { password = it },
             singleLine = true,
-            label = { Text(passwordError.ifEmpty { "Password" },color = if (passwordError.isNotEmpty()) Red else Unspecified ) },
+            label = {
+                Text(
+                    passwordError.ifEmpty { "Password" },
+                    color = if (passwordError.isNotEmpty()) Red else Unspecified
+                )
+            },
             leadingIcon = {
                 Icon(
                     Icons.Rounded.Lock,
-                    contentDescription =  "" )
-
+                    contentDescription = ""
+                )
             },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
@@ -123,7 +163,6 @@ fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
                 Icon(
                     painter = image,
                     contentDescription = "",
-
                     modifier = Modifier
                         .size(24.dp)
                         .clickable { passwordVisible = !passwordVisible }
@@ -138,47 +177,79 @@ fun LoginScreen(navController: NavController,onLoginSuccess:() -> Unit){
                 unfocusedIndicatorColor = Transparent
             )
         )
-        //Login Button
+        // Login Button
         Button(
             onClick = {
                 nameError = if (username.isBlank()) "Username is required" else ""
                 passwordError = if (password.isBlank()) "Password is required" else ""
 
-                if (username == "admin" && password == "admin"){
-                    println("Login Page Success")
-                    onLoginSuccess()
+                if (username.isNotBlank() && password.isNotBlank()) {
+                    coroutineScope.launch {
+                        try {
+                            val userService = UserService()
+                            val user = userService.getUserByDisplayName(username)
+                            
+                            if (user != null) {
+                                // Get password from the first provider in providerUserInfo
+                                val userPassword = if (user.providerUserInfo.isNotEmpty()) {
+                                    user.providerUserInfo[0].password
+                                } else {
+                                    ""
+                                }
+
+                                if (userPassword == password) {
+                                    Log.d("LoginScreen", "Login successful for user: ${user.displayName}")
+                                    onLoginSuccess(user)
+                                } else {
+                                    Log.d("LoginScreen", "Password incorrect")
+                                    passwordError = "Incorrect password"
+                                }
+                            } else {
+                                Log.d("LoginScreen", "User not found: $username")
+                                nameError = "User not found"
+                            }
+                        } catch (e: Exception) {
+                            Log.e("LoginScreen", "Login error: ${e.message}")
+                        }
+                    }
                 }
             },
             modifier = Modifier
                 .width(200.dp)
-                .padding(15.dp)
-            ,
+                .padding(15.dp),
             colors = ButtonDefaults.buttonColors(LoginPageButtonColor),
             shape = RoundedCornerShape(30.dp),
-        ){
-            Text(text = "Login", color = Black, fontFamily = PromptfontFamily, fontSize = 16.sp,fontWeight = FontWeight.Bold)
+        ) {
+            Text(
+                text = "Login",
+                color = Black,
+                fontFamily = PromptfontFamily,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        Text(text = "Forget Password",
+        Text(
+            text = "Forget Password",
             color = LoginPageText,
             fontFamily = PromptfontFamily,
             fontSize = 14.sp,
             style = TextStyle(textDecoration = TextDecoration.Underline),
-            modifier = Modifier.clickable{
+            modifier = Modifier.clickable {
                 navController.navigate(Screen.ForgetPassword.route)
-
-            })
+            }
+        )
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text(text = "Not a member?\n Sign Up Now!",
+        Text(
+            text = "Not a member?\n Sign Up Now!",
             color = LoginPageText,
             fontFamily = PromptfontFamily,
             fontSize = 14.sp,
             style = TextStyle(textDecoration = TextDecoration.Underline),
-            modifier = Modifier.clickable{
+            modifier = Modifier.clickable {
                 navController.navigate(Screen.Register.route)
-                },
-            )
-
+            },
+        )
     }
 }

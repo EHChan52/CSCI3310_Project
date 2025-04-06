@@ -1,12 +1,12 @@
 package com.example.csci3310
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.afer_login.dataFetch.User
 import com.example.login.takeuserface.CameraScreen
 import com.example.login.takeuserface.ImageReviewScreen
 import com.example.login.takeuserface.AvatarColorPreviewScreen
@@ -24,14 +24,14 @@ sealed class Screen(val route: String){
 }
 
 @Composable
-fun BeforeLoginNavigation(onLoginSuccess:() -> Unit) {
+fun BeforeLoginNavigation(onLoginSuccess: (User) -> Unit) {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route
     ) {
         composable(Screen.Login.route) {
-            LoginScreen(navController,onLoginSuccess)
+            LoginScreen(navController, onLoginSuccess)
         }
         composable(Screen.Camera.route) {
             CameraScreen(navController)

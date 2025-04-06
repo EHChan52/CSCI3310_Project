@@ -16,14 +16,15 @@ import com.example.csci3310.databinding.ActivityMainBinding
 import me.ibrahimsn.lib.SmoothBottomBar
 import com.example.afer_login.SettingPage
 import com.example.login.ui.theme.LoginTheme
+import com.example.afer_login.dataFetch.User
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var composeView :ComposeView
+    private lateinit var composeView: ComposeView
 
-
-    var LoggedIn:Boolean = false
+    var LoggedIn: Boolean = false
+    private var currentUser: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,17 +35,17 @@ class MainActivity : AppCompatActivity() {
         val bottomBar: SmoothBottomBar = findViewById(R.id.bottomBar)
         composeView = findViewById(R.id.compose_view)
 
-
-        if (!LoggedIn){
+        if (!LoggedIn) {
             bottomBar.visibility = View.GONE
-            composeView.setContent{
+            composeView.setContent {
                 LoginTheme {
-                    Scaffold (modifier = Modifier.fillMaxSize()) { _ ->
+                    Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
                         BeforeLoginNavigation(
-                            onLoginSuccess = {
+                            onLoginSuccess = { user ->
                                 LoggedIn = true
+                                currentUser = user
                                 println(LoggedIn)
-                                Toast.makeText(applicationContext,"Login success",Toast.LENGTH_SHORT).show()
+                                Toast.makeText(applicationContext, "Login success", Toast.LENGTH_SHORT).show()
                                 composeView.setContent {
                                     LoginTheme {
                                         HomeNavigation()
@@ -53,15 +54,13 @@ class MainActivity : AppCompatActivity() {
                                 bottomBar.visibility = View.VISIBLE
                                 setupBottomBar(bottomBar)
                             }
-
                         )
                     }
                 }
             }
-        }
-        else{
+        } else {
             bottomBar.visibility = View.VISIBLE
-            composeView.setContent { LoginTheme {  HomeNavigation() } }
+            composeView.setContent { LoginTheme { HomeNavigation() } }
             setupBottomBar(bottomBar)
         }
     }
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 0 -> composeView.setContent { HomeNavigation() }
                 1 -> composeView.setContent { FittingPage() }
                 2 -> composeView.setContent { cartPage() }
-                3 -> composeView.setContent { SettingPage() }
+                3 -> composeView.setContent { SettingPage(user = currentUser) }
             }
         }
     }

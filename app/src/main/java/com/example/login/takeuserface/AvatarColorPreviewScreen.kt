@@ -163,6 +163,16 @@ fun AvatarColorPreviewScreen(navController: NavController) {
                     coroutineScope.launch {
                         val result = saveColoredAvatar(context, coloredAvatarBitmap)
                         saveStatus = result
+                        
+                        // Navigate to Login screen if avatar was saved successfully
+                        if (result == "Avatar saved successfully!") {
+                            // Short delay to allow user to see success message
+                            kotlinx.coroutines.delay(1000)
+                            navController.navigate("login_screen") {
+                                // Clear the back stack so user can't go back to avatar screens
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Blue),
@@ -207,6 +217,7 @@ private suspend fun saveColoredAvatar(context: android.content.Context, bitmap: 
             sharedPrefs.edit().putString("latest_avatar_path", imageFile.absolutePath).apply()
             
             Log.d("AvatarSave", "Avatar saved successfully at: ${imageFile.absolutePath}")
+            
             return@withContext "Avatar saved successfully!"
         } catch (e: Exception) {
             Log.e("AvatarSave", "Error saving avatar: ${e.message}", e)

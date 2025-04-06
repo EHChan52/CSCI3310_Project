@@ -14,38 +14,62 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import com.example.csci3310.R
+import com.example.afer_login.dataFetch.User
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @Composable
-fun SettingPage(){
+fun SettingPage(user: User? = null){
 
     Column(modifier = Modifier.padding(15.dp)){
         Row(modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically)
         {
             Spacer(modifier = Modifier.width(8.dp))
-            Image(
-                painter = painterResource(id = R.drawable.usericon), // Replace with your drawable resource ID
-                contentDescription = "Circular Image",
-                modifier = Modifier
-                    .size(80.dp)     // Set the desired size
-                    .clip(CircleShape) // Apply the circle shape clip
-            )
+            
+            // Display user profile image from imgLink if available, otherwise use default
+            if (user != null && user.customClaims.imgLink.isNotEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(user.customClaims.imgLink)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "User profile image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.usericon),
+                    contentDescription = "Default user image",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                )
+            }
+            
             Spacer(modifier = Modifier.width(15.dp))
+            
+            // Display the user's displayName if available, otherwise show default text
             Text(
-                text = "  User Name",
+                text = if (user != null) "  ${user.displayName}" else "  User Name",
                 color = setting_page_font,
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
                 fontFamily = TextFont,
                 modifier = Modifier.wrapContentWidth()
             )
-
         }
+        
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider(color = setting_page_font, thickness = 2.dp, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(8.dp))
