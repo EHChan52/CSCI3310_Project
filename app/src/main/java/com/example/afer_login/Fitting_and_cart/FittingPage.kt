@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -149,9 +149,9 @@ fun FittingPage(){
         Spacer(modifier = Modifier.height(3.dp))
         Text(text = "Fitting", fontFamily = TextFont, fontSize = 22.sp)
         var myList = getAllSavedClothes()
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding =  PaddingValues(5.dp),
+        LazyHorizontalGrid(
+            rows = GridCells.Fixed(1),
+            contentPadding = PaddingValues(5.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             itemsIndexed(myList, itemContent = { index, item -> 
