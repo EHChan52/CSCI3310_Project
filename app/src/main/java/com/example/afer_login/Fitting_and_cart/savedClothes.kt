@@ -1,28 +1,37 @@
 package com.example.afer_login.Fitting_and_cart
 
-import com.example.csci3310.R
+import com.example.afer_login.dataFetch.Product
 
 data class savedClothes(
-    var name: String,
-    var type: String,
-    var imageRes : Int
+    val brand : String? = null,
+    val gender : String? = null,
+    val imgLink : String? = null,
+    val name : String? = null,
+    val price : Int? = null,
+    val sizes : String? = null,
+    val type : String? = null,
+    val shopItemlink : String? = null,
 )
+
+// Private mutable list to store all saved clothes
+private val savedClothesList = mutableListOf<savedClothes>()
+
 //suppose this list is grap data from local database
 fun getAllSavedClothes() : List<savedClothes>{
-    return listOf<savedClothes>(
-        savedClothes("image1", "top",R.drawable.image1),
-        savedClothes("image2", "top",R.drawable.image2),
-        savedClothes("image3", "top",R.drawable.image3),
-        savedClothes("image4", "bottom",R.drawable.image4),
-        savedClothes("image5", "bottom",R.drawable.image5),
-        savedClothes("image6", "top",R.drawable.image6),
-        savedClothes("image1", "top",R.drawable.image1),
-        savedClothes("image2", "top",R.drawable.image2),
-        savedClothes("image3", "top",R.drawable.image3),
-        savedClothes("image4", "bottom",R.drawable.image4),
-        savedClothes("image5", "bottom",R.drawable.image5),
-        savedClothes("image6", "top",R.drawable.image6),
-        
+    return savedClothesList
+}
 
+fun setAllSavedClothes(clothes: Product) {
+    //append the product to the list by converting it to savedClothes
+    val newSavedClothes = savedClothes(
+        brand = clothes.brand,
+        gender = clothes.gender,
+        imgLink = clothes.imgLink,
+        name = clothes.name,
+        price = clothes.price,
+        sizes = clothes.sizes,
+        type = clothes.type,
+        shopItemlink = clothes.shopItemlink
     )
+    savedClothesList.add(newSavedClothes)
 }

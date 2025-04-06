@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.example.afer_login.*
 
 @Composable
@@ -86,11 +87,11 @@ fun cartPage(){
         ) {
             itemsIndexed(myList, itemContent = { index, item ->
                 ClothesCard(item = item)
-            }
-            )
+            })
         }
     }
 }
+
 @Composable
 private fun ClothesCard(item: savedClothes){
     Card(
@@ -101,22 +102,20 @@ private fun ClothesCard(item: savedClothes){
         ),
         content = {
             Row(){
-                Image(painter = painterResource(id = item.imageRes),
-                    contentDescription = item.name,
-                    modifier = Modifier.size(150.dp).padding(3.dp))
+                // Use Coil to load images from URLs
+                Image(
+                    painter = rememberImagePainter(item.imgLink),
+                    contentDescription = item.name ?: "Clothing item",
+                    modifier = Modifier.size(150.dp).padding(3.dp)
+                )
                 Spacer(modifier = Modifier.width(5.dp))
                 Column(){
-                    Row {
-                        Text(text = "Brand", fontFamily = TextFont )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(text = "Size", fontFamily = TextFont )
-                    }
-                    Text(text = "Clothes Type", fontFamily = TextFont )
-                    Text(text = item.name, fontFamily = TextFont )
-                    Text(text = "price", fontFamily = TextFont )
-
+                    Text(text = "Brand: ${item.brand ?: "N/A"}", fontFamily = TextFont )
+                    Text(text = "Size: ${item.sizes ?: "N/A"}", fontFamily = TextFont )
+                    Text(text = "Type: ${item.type ?: "N/A"}", fontFamily = TextFont )
+                    Text(text = item.name ?: "Unknown", fontFamily = TextFont )
+                    Text(text = "Price: $${item.price ?: 0}", fontFamily = TextFont )
                 }
-
             }
         }
     )

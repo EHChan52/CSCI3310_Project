@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.example.csci3310.R
 import com.example.afer_login.*
 import kotlinx.coroutines.Dispatchers
@@ -117,8 +118,8 @@ fun FittingPage(){
                     // Overlay the selected clothes on top of the avatar
                     selectedClothes.forEach { clothing ->
                         Image(
-                            painter = painterResource(id = clothing.imageRes),
-                            contentDescription = clothing.name,
+                            painter = rememberImagePainter(clothing.imgLink),
+                            contentDescription = clothing.name ?: "Clothing item",
                             modifier = Modifier
                                 .size(190.dp)  // Make the overlay image smaller
                                 .align(Alignment.Center)  // Center align the overlay image
@@ -180,8 +181,8 @@ private fun ClothesinCart(
         shape = RoundedCornerShape(0.dp)  // Ensure non-circular buttons
     ) {
         Image(
-            painter = painterResource(id = item.imageRes),
-            contentDescription = item.name,
+            painter = rememberImagePainter(item.imgLink),
+            contentDescription = item.name ?: "Clothing item",
             modifier = Modifier.fillMaxSize()
         )
     }
