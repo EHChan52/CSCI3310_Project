@@ -7,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,8 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
+import com.example.afer_login.TextFont
+import com.example.afer_login.setting_page_font
 import com.example.csci3310.R
-import com.example.afer_login.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -124,11 +124,13 @@ fun FittingPage(){
                                 .size(190.dp)  // Make the overlay image smaller
                                 .align(Alignment.Center)  // Center align the overlay image
                                 .then(
-                                    if (clothing.type == "top") {
+                                    (if (clothing.type == "Blouse" || clothing.type == "Knitten Shirt" || clothing.type == "Coat") {
                                         Modifier.offset(y = (-75).dp)
-                                    } else {
+                                    } else if(clothing.type == "Dress"){
                                         Modifier.offset(y = (20).dp)
-                                    }
+                                    } else {
+                                        Modifier.offset(y = (0).dp)
+                                    }) as Modifier
                                 )
                         )
                     }
