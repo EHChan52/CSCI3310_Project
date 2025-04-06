@@ -77,91 +77,95 @@ fun FittingPage(){
         }
     }
     
-    Column(modifier = Modifier.padding(15.dp)){
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(500.dp)){
-            //where the avatar place
-            Image(
-                painter = painterResource(id = R.drawable.fitting_room_background),
-                contentDescription = "Fitting room background",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(500.dp),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-            )
-            Column(horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.align(Alignment.Center)) {
-                
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // Use the custom avatar if available, otherwise use the default
-                    if (customAvatarBitmap != null) {
-                        Image(
-                            bitmap = customAvatarBitmap!!.asImageBitmap(),
-                            contentDescription = "Custom Avatar",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
-                                .padding(20.dp)
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.human_avatar_default),
-                            contentDescription = "Default Avatar",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
-                                .padding(20.dp)
-                        )
-                    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(15.dp)){
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)){
+                //where the avatar place
+                Image(
+                    painter = painterResource(id = R.drawable.fitting_room_background),
+                    contentDescription = "Fitting room background",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(500.dp),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.align(Alignment.Center)) {
                     
-                    // Overlay the selected clothes on top of the avatar
-                    selectedClothes.forEach { clothing ->
-                        Image(
-                            painter = rememberImagePainter(clothing.imgLink),
-                            contentDescription = clothing.name ?: "Clothing item",
-                            modifier = Modifier
-                                .size(190.dp)  // Make the overlay image smaller
-                                .align(Alignment.Center)  // Center align the overlay image
-                                .then(
-                                    (if (clothing.type == "Blouse" || clothing.type == "Knitten Shirt" || clothing.type == "Coat") {
-                                        Modifier.offset(y = (-75).dp)
-                                    } else if(clothing.type == "Dress"){
-                                        Modifier.offset(y = (20).dp)
-                                    } else {
-                                        Modifier.offset(y = (0).dp)
-                                    }) as Modifier
-                                )
-                        )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Use the custom avatar if available, otherwise use the default
+                        if (customAvatarBitmap != null) {
+                            Image(
+                                bitmap = customAvatarBitmap!!.asImageBitmap(),
+                                contentDescription = "Custom Avatar",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                                    .padding(20.dp)
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.human_avatar_default),
+                                contentDescription = "Default Avatar",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                                    .padding(20.dp)
+                            )
+                        }
+                        
+                        // Overlay the selected clothes on top of the avatar
+                        selectedClothes.forEach { clothing ->
+                            Image(
+                                painter = rememberImagePainter(clothing.imgLink),
+                                contentDescription = clothing.name ?: "Clothing item",
+                                modifier = Modifier
+                                    .size(190.dp)  // Make the overlay image smaller
+                                    .align(Alignment.Center)  // Center align the overlay image
+                                    .then(
+                                        (if (clothing.type == "Blouse" || clothing.type == "Knitten Shirt" || clothing.type == "Coat") {
+                                            Modifier.offset(y = (-75).dp)
+                                        } else if(clothing.type == "Dress"){
+                                            Modifier.offset(y = (20).dp)
+                                        } else {
+                                            Modifier.offset(y = (0).dp)
+                                        }) as Modifier
+                                    )
+                            )
+                        }
                     }
                 }
+                Column(horizontalAlignment = Alignment.End,
+                    modifier = Modifier.align(Alignment.BottomEnd)) {
+                    ButtonsForAvatar(R.drawable.plus, onClick = { selectedClothes = emptyList() })
+                    ButtonsForAvatar(R.drawable.transfer, onClick = {})
+                    ButtonsForAvatar(R.drawable.maximize, onClick = {})
+                }
             }
-            Column(horizontalAlignment = Alignment.End,
-                modifier = Modifier.align(Alignment.BottomEnd)) {
-                ButtonsForAvatar(R.drawable.plus, onClick = { selectedClothes = emptyList() })
-                ButtonsForAvatar(R.drawable.transfer, onClick = {})
-                ButtonsForAvatar(R.drawable.maximize, onClick = {})
+
+            HorizontalDivider( thickness = 2.dp, color = setting_page_font, modifier = Modifier.padding(horizontal = 100.dp))
+
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(text = "Fitting", fontFamily = TextFont, fontSize = 22.sp)
+            var myList = getAllSavedClothes()
+            LazyHorizontalGrid(
+                rows = GridCells.Fixed(1),
+                contentPadding = PaddingValues(5.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                itemsIndexed(myList, itemContent = { index, item -> 
+                    ClothesinCart(
+                        item = item,
+                        onSelect = { 
+                            selectedClothes = selectedClothes + it
+                        }
+                    )
+                })
             }
-        }
-
-        HorizontalDivider( thickness = 2.dp, color = setting_page_font, modifier = Modifier.padding(horizontal = 100.dp))
-
-        Spacer(modifier = Modifier.height(3.dp))
-        Text(text = "Fitting", fontFamily = TextFont, fontSize = 22.sp)
-        var myList = getAllSavedClothes()
-        LazyHorizontalGrid(
-            rows = GridCells.Fixed(1),
-            contentPadding = PaddingValues(5.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            itemsIndexed(myList, itemContent = { index, item -> 
-                ClothesinCart(
-                    item = item,
-                    onSelect = { 
-                        selectedClothes = selectedClothes + it
-                    }
-                )
-            })
         }
     }
 }

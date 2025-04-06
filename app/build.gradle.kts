@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.firestore)
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation(libs.androidx.appcompat)

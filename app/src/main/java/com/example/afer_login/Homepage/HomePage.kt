@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +42,7 @@ import coil.compose.AsyncImage
 import com.example.afer_login.Fitting_and_cart.setAllSavedClothes
 import com.example.afer_login.SearchFont
 import com.example.afer_login.TextFont
+import com.example.afer_login.buttonColor
 import com.example.afer_login.dataFetch.Product
 import com.example.afer_login.dataFetch.ProductRepository
 import com.example.afer_login.searchBar
@@ -244,8 +246,8 @@ private fun ProductDetailDialog(product: Product, onDismiss: () -> Unit) {
                     onDismiss() 
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = searchBar,
-                    contentColor = searchBar_Text
+                    containerColor = buttonColor,
+                    contentColor = Color.Black
                 )
             ) {
                 Text("Add to Cart", fontFamily = TextFont)
@@ -255,7 +257,7 @@ private fun ProductDetailDialog(product: Product, onDismiss: () -> Unit) {
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = searchBar,
+                    containerColor = Color.Black,
                     contentColor = searchBar_Text
                 )
             ) {
