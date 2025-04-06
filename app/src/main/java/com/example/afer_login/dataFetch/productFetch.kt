@@ -75,7 +75,6 @@ class ProductRepository {
         maxPrice: Int? = null
     ): List<Product> = withContext(Dispatchers.IO) {
         try {
-            // In Realtime Database, we need to apply more complex filters on the client side
             // First, query by the most selective filter
             val snapshot = when {
                 brand != null -> productsRef.orderByChild("brand").equalTo(brand).get().await()

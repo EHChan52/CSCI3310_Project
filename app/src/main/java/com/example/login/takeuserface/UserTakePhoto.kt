@@ -731,7 +731,7 @@ fun ImageReviewScreen(navController: NavController, imageUriString: String) {
                             val apiKey = "SG_b78e15ed8491c323"
                             val segmindUrl = "https://api.segmind.com/v1/background-eraser"
                             
-                            // Create JSON payload matching the Python example
+                            // Create JSON payload
                             val jsonPayload = """
                                 {
                                   "image": "$base64Image",
